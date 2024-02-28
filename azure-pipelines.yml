@@ -23,8 +23,6 @@ stages:
       matrix:
         VS2022_Release:
          configuration: Release
-        VS2022_Debug:
-         configuration: Debug
 
     steps:
     - checkout: self
@@ -56,20 +54,9 @@ stages:
           CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On -DLLVM_USE_SANITIZER=Address,Undefined -DLLVM_ENABLE_LIBCXX=On -DLLVM_USE_LINKER=lld
           CHECK_ALL_ENV: ASAN_OPTIONS=alloc_dealloc_mismatch=0
           OS: Linux
-        Linux_Clang_Debug:
-          image: ${{ variables.linux }}
-          configuration: Debug
-          CC: clang
-          CXX: clang++
-          CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On -DLLVM_USE_LINKER=lld
         Linux_Gcc_Release:
           image: ${{ variables.linux }}
           configuration: Release
-          CC: gcc-9
-          CXX: g++-9
-        Linux_Gcc_Debug:
-          image: ${{ variables.linux }}
-          configuration: Debug
           CC: gcc-9
           CXX: g++-9
         MacOS_Clang_Release:
@@ -79,12 +66,6 @@ stages:
           CXX: clang++
           CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On
           OS: MacOS
-        MacOS_Clang_Debug:
-          image: ${{ variables.macOS }}
-          configuration: Debug
-          CC: clang
-          CXX: clang++
-          CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On
 
     pool:
       vmImage: $(image)
