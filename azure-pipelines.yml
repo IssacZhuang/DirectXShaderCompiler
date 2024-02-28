@@ -34,7 +34,7 @@ stages:
       displayName: 'Building'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(Build.SourcesDirectory)'
+        SourceFolder: '$(Agent.BuildDirectory)'
         Contents: '**'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
@@ -111,7 +111,7 @@ stages:
       displayName: 'Smoke tests'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(Build.SourcesDirectory)'
+        SourceFolder: './build/'
         Contents: |
           '**'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
