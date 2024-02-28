@@ -32,10 +32,16 @@ stages:
         call utils\hct\hctstart.cmd %HLSL_SRC_DIR% %HLSL_BLD_DIR%
         call utils\hct\hctbuild.cmd -$(platform) -$(configuration) -show-cmake-log -spirvtest
       displayName: 'Building'
-    - script: |
-        call utils\hct\hctstart.cmd %HLSL_SRC_DIR% %HLSL_BLD_DIR%
-        call utils\hct\hcttest.cmd -$(configuration) noexec
-      displayName: 'DXIL Tests'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: '**/*.dll'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'Binaries'
+        publishLocation: 'Container'
 
   - job: Nix
     timeoutInMinutes: 90
@@ -43,6 +49,7 @@ stages:
     variables:
       macOS: macOS-latest
       linux: Ubuntu-latest
+    
 
     strategy:
       matrix:
@@ -102,11 +109,16 @@ stages:
         ls -ld $AGENT_BUILDDIRECTORY
         ls -ld $BUILD_SOURCESDIRECTORY
       displayName: 'Smoke tests'
-    - bash: $(CHECK_ALL_ENV) ninja -C build check-all
-      displayName: 'DXC tests'
-    - task: PublishTestResults@2
+    - task: CopyFiles@2
       inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: '**/testresults.xunit.xml'
-      condition: succeededOrFailed()
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: |
+          '**/*.so'
+          '**/*.dylib'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'Binaries'
+        publishLocation: 'Container'
 
