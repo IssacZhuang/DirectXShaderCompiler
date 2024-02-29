@@ -60,18 +60,18 @@ stages:
         #   CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On -DLLVM_USE_SANITIZER=Address,Undefined -DLLVM_ENABLE_LIBCXX=On -DLLVM_USE_LINKER=lld
         #   CHECK_ALL_ENV: ASAN_OPTIONS=alloc_dealloc_mismatch=0
         #   OS: Linux
-        # Linux_Gcc_Release:
-        #   image: ${{ variables.linux }}
-        #   configuration: Release
-        #   CC: gcc-9
-        #   CXX: g++-9
-        MacOS_Clang_Release:
-          image: ${{ variables.macOS }}
+        Linux_Gcc_Release:
+          image: ${{ variables.linux }}
           configuration: Release
-          CC: clang
-          CXX: clang++
-          CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On
-          OS: MacOS
+          CC: gcc-9
+          CXX: g++-9
+        # MacOS_Clang_Release:
+        #   image: ${{ variables.macOS }}
+        #   configuration: Release
+        #   CC: clang
+        #   CXX: clang++
+        #   CMAKE_OPTS: -DLLVM_ENABLE_WERROR=On
+        #   OS: MacOS
 
     pool:
       vmImage: $(image)
@@ -108,14 +108,14 @@ stages:
         ls -ld $AGENT_BUILDDIRECTORY
         ls -ld $BUILD_SOURCESDIRECTORY
       displayName: 'Smoke tests'
-    - bash: ls -R
+    - bash: ls -R $BUILD_SOURCESDIRECTORY/build
       displayName: 'List directory'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        SourceFolder: '$(Build.SourcesDirectory)/build'
         Contents: |
-          '**/*.so'
-          '**/*.dylib'
+          '**/libdxcompiler.so'
+          '**/libdxcompiler.dylib'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
