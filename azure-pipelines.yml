@@ -113,8 +113,15 @@ stages:
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(Build.SourcesDirectory)/build/lib'
-        Contents: '**'
+        Contents: 'libdxcompiler.so'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      condition: eq(variables['image'], variables['Ubuntu'])
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)/build/lib'
+        Contents: 'libdxcompiler.dylib'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      condition: eq(variables['image'], variables['macOS'])
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
