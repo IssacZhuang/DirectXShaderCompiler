@@ -108,14 +108,14 @@ stages:
         ls -ld $AGENT_BUILDDIRECTORY
         ls -ld $BUILD_SOURCESDIRECTORY
       displayName: 'Smoke tests'
-    - bash: ls -R $BUILD_SOURCESDIRECTORY/build
+    - bash: ls -R $BUILD_SOURCESDIRECTORY/build/lib
       displayName: 'List directory'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(Build.SourcesDirectory)/build'
+        SourceFolder: '$(Build.SourcesDirectory)/build/lib'
         Contents: |
-          '**/libdxcompiler.so'
-          '**/libdxcompiler.dylib'
+          'libdxcompiler.so'
+          'libdxcompiler.dylib'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
