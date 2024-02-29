@@ -113,9 +113,7 @@ stages:
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(Build.SourcesDirectory)/build/lib'
-        Contents: |
-          'libdxcompiler.so'
-          'libdxcompiler.dylib'
+        Contents: '**'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
