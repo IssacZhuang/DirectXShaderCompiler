@@ -34,8 +34,8 @@ stages:
       displayName: 'Building'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(Agent.BuildDirectory)'
-        Contents: '**/dxcompiler.dll'
+        SourceFolder: '$(Agent.BuildDirectory)/Release/bin'
+        Contents: 'dxcompiler.dll'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
