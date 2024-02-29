@@ -110,7 +110,7 @@ stages:
       displayName: 'Smoke tests'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: '$(Build.SourcesDirectory)/build'
+        SourceFolder: '$(Build.SourcesDirectory)'
         Contents: |
           '**/*.so'
           '**/*.dylib'
