@@ -35,13 +35,12 @@ stages:
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(Agent.BuildDirectory)'
-        Contents: '**'
+        Contents: '**/*.dll'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'Binaries'
-        publishLocation: 'Container'
 
   - job: Nix
     timeoutInMinutes: 90
@@ -111,13 +110,13 @@ stages:
       displayName: 'Smoke tests'
     - task: CopyFiles@2
       inputs:
-        SourceFolder: './build/'
+        SourceFolder: '$(Build.SourcesDirectory)/build'
         Contents: |
-          '**'
+          '**/*.so'
+          '**/*.dylib'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'Binaries'
-        publishLocation: 'Container'
 
