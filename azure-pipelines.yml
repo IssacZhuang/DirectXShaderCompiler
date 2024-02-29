@@ -115,7 +115,7 @@ stages:
         SourceFolder: '$(Build.SourcesDirectory)/build/lib'
         Contents: 'libdxcompiler.so'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
-      condition: eq(variables['image'], variables['Ubuntu'])
+      condition: eq(variables['image'], variables['linux'])
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(Build.SourcesDirectory)/build/lib'
