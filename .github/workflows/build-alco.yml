@@ -1,0 +1,189 @@
+name: Build Alco DXCompiler
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g. v1.9.2602-alco.1)'
+        required: true
+        type: string
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: win-x64
+            cmake_arch: x64
+          - target: win-arm64
+            cmake_arch: ARM64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CMake Configure
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.cmake_arch }} `
+            -C cmake/caches/PredefinedParams.cmake `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DLLVM_TARGETS_TO_BUILD=None `
+            -DENABLE_SPIRV_CODEGEN=ON
+
+      - name: Build
+        run: cmake --build build --config Release --target dxcompiler --target dxildll
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxc-${{ matrix.target }}
+          path: |
+            build/bin/Release/dxcompiler.dll
+            build/bin/Release/dxil.dll
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            toolchain: native
+          - target: linux-arm64
+            toolchain: linux-arm64
+          - target: android-arm64
+            toolchain: android
+            android_abi: arm64-v8a
+          - target: android-x64
+            toolchain: android
+            android_abi: x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang libxml2-dev
+          if [ "${{ matrix.toolchain }}" = "linux-arm64" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          fi
+
+      - name: Setup Android NDK
+        if: matrix.toolchain == 'android'
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+
+      - name: CMake Configure
+        shell: bash
+        run: |
+          EXTRA_ARGS=""
+          if [ "${{ matrix.toolchain }}" = "native" ]; then
+            EXTRA_ARGS="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+          elif [ "${{ matrix.toolchain }}" = "linux-arm64" ]; then
+            EXTRA_ARGS="-DCMAKE_TOOLCHAIN_FILE=cmake/linux-aarch64-toolchain.cmake"
+          elif [ "${{ matrix.toolchain }}" = "android" ]; then
+            EXTRA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake -DANDROID_ABI=${{ matrix.android_abi }} -DANDROID_PLATFORM=android-21"
+          fi
+          cmake -B build -G Ninja \
+            -C cmake/caches/PredefinedParams.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_TARGETS_TO_BUILD=None \
+            -DENABLE_SPIRV_CODEGEN=ON \
+            $EXTRA_ARGS
+
+      - name: Build
+        run: cmake --build build --target dxcompiler --target dxildll
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxc-${{ matrix.target }}
+          path: |
+            build/lib/libdxcompiler.so
+            build/lib/libdxil.so
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: osx-arm64
+            cmake_osx_arch: arm64
+          - target: osx-x64
+            cmake_osx_arch: x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: brew install ninja
+
+      - name: CMake Configure
+        run: |
+          cmake -B build -G Ninja \
+            -C cmake/caches/PredefinedParams.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_TARGETS_TO_BUILD=None \
+            -DENABLE_SPIRV_CODEGEN=ON \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }}
+
+      - name: Build
+        run: cmake --build build --target dxcompiler --target dxildll
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxc-${{ matrix.target }}
+          path: |
+            build/lib/libdxcompiler.dylib
+            build/lib/libdxil.dylib
+
+  release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: dxc-*
+
+      - name: Organize and Package
+        run: |
+          mkdir -p runtimes/win-x64/native
+          mkdir -p runtimes/win-arm64/native
+          mkdir -p runtimes/linux-x64/native
+          mkdir -p runtimes/linux-arm64/native
+          mkdir -p runtimes/osx-arm64/native
+          mkdir -p runtimes/osx-x64/native
+          mkdir -p runtimes/android-arm64/native
+          mkdir -p runtimes/android-x64/native
+
+          cp artifacts/dxc-win-x64/dxcompiler.dll runtimes/win-x64/native/
+          cp artifacts/dxc-win-x64/dxil.dll runtimes/win-x64/native/
+          cp artifacts/dxc-win-arm64/dxcompiler.dll runtimes/win-arm64/native/
+          cp artifacts/dxc-win-arm64/dxil.dll runtimes/win-arm64/native/
+          cp artifacts/dxc-linux-x64/libdxcompiler.so runtimes/linux-x64/native/
+          cp artifacts/dxc-linux-x64/libdxil.so runtimes/linux-x64/native/
+          cp artifacts/dxc-linux-arm64/libdxcompiler.so runtimes/linux-arm64/native/
+          cp artifacts/dxc-linux-arm64/libdxil.so runtimes/linux-arm64/native/
+          cp artifacts/dxc-osx-arm64/libdxcompiler.dylib runtimes/osx-arm64/native/
+          cp artifacts/dxc-osx-arm64/libdxil.dylib runtimes/osx-arm64/native/
+          cp artifacts/dxc-osx-x64/libdxcompiler.dylib runtimes/osx-x64/native/
+          cp artifacts/dxc-osx-x64/libdxil.dylib runtimes/osx-x64/native/
+          cp artifacts/dxc-android-arm64/libdxcompiler.so runtimes/android-arm64/native/
+          cp artifacts/dxc-android-arm64/libdxil.so runtimes/android-arm64/native/
+          cp artifacts/dxc-android-x64/libdxcompiler.so runtimes/android-x64/native/
+          cp artifacts/dxc-android-x64/libdxil.so runtimes/android-x64/native/
+
+          zip -r dxc-alco-runtimes.zip runtimes/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          files: dxc-alco-runtimes.zip
