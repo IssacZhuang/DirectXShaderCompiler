@@ -34,8 +34,8 @@ jobs:
         with:
           name: dxc-win-x64
           path: |
-            build/bin/Release/dxcompiler.dll
-            build/bin/Release/dxil.dll
+            build/Release/bin/dxcompiler.dll
+            build/Release/bin/dxil.dll
 
   build-windows-arm64:
     runs-on: windows-11-arm
@@ -62,8 +62,8 @@ jobs:
         with:
           name: dxc-win-arm64
           path: |
-            build/bin/Release/dxcompiler.dll
-            build/bin/Release/dxil.dll
+            build/Release/bin/dxcompiler.dll
+            build/Release/bin/dxil.dll
 
   build-linux:
     runs-on: ubuntu-latest
