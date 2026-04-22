@@ -30,7 +30,8 @@ jobs:
             -C cmake/caches/PredefinedParams.cmake `
             -DCMAKE_BUILD_TYPE=Release `
             -DLLVM_TARGETS_TO_BUILD=None `
-            -DENABLE_SPIRV_CODEGEN=ON
+            -DENABLE_SPIRV_CODEGEN=ON `
+            -DHLSL_INCLUDE_TESTS=OFF
 
       - name: Build
         run: cmake --build build --config Release --target dxcompiler --target dxildll
@@ -95,6 +96,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_TARGETS_TO_BUILD=None \
             -DENABLE_SPIRV_CODEGEN=ON \
+            -DHLSL_INCLUDE_TESTS=OFF \
             $EXTRA_ARGS
 
       - name: Build
@@ -133,6 +135,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_TARGETS_TO_BUILD=None \
             -DENABLE_SPIRV_CODEGEN=ON \
+            -DHLSL_INCLUDE_TESTS=OFF \
             -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }}
 
       - name: Build

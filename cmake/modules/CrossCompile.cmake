@@ -18,6 +18,9 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
 
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        -DLLVM_ENABLE_EH=${LLVM_ENABLE_EH}
+        -DLLVM_ENABLE_RTTI=${LLVM_ENABLE_RTTI}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
     WORKING_DIRECTORY ${LLVM_${target_name}_BUILD}
     DEPENDS ${LLVM_${target_name}_BUILD}
@@ -42,6 +45,8 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} ${build_type_flags}
         -G "${CMAKE_GENERATOR}" -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}
+        -DLLVM_ENABLE_EH=${LLVM_ENABLE_EH}
+        -DLLVM_ENABLE_RTTI=${LLVM_ENABLE_RTTI}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
       WORKING_DIRECTORY ${LLVM_${target_name}_BUILD} )
   endif(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
