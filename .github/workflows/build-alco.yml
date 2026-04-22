@@ -31,7 +31,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             -DLLVM_TARGETS_TO_BUILD=None `
             -DENABLE_SPIRV_CODEGEN=ON `
-            -DHLSL_INCLUDE_TESTS=OFF
+            -DHLSL_INCLUDE_TESTS=OFF `
+            -DLLVM_INCLUDE_TESTS=OFF
 
       - name: Build
         run: cmake --build build --config Release --target dxcompiler --target dxildll
@@ -52,8 +53,6 @@ jobs:
         include:
           - target: linux-x64
             toolchain: native
-          - target: linux-arm64
-            toolchain: linux-arm64
           - target: android-arm64
             toolchain: android
             android_abi: arm64-v8a
@@ -69,9 +68,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build clang libxml2-dev
-          if [ "${{ matrix.toolchain }}" = "linux-arm64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          fi
 
       - name: Setup Android NDK
         if: matrix.toolchain == 'android'
@@ -86,8 +82,6 @@ jobs:
           EXTRA_ARGS=""
           if [ "${{ matrix.toolchain }}" = "native" ]; then
             EXTRA_ARGS="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
-          elif [ "${{ matrix.toolchain }}" = "linux-arm64" ]; then
-            EXTRA_ARGS="-DCMAKE_TOOLCHAIN_FILE=cmake/linux-aarch64-toolchain.cmake"
           elif [ "${{ matrix.toolchain }}" = "android" ]; then
             EXTRA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake -DANDROID_ABI=${{ matrix.android_abi }} -DANDROID_PLATFORM=android-21"
           fi
@@ -97,6 +91,7 @@ jobs:
             -DLLVM_TARGETS_TO_BUILD=None \
             -DENABLE_SPIRV_CODEGEN=ON \
             -DHLSL_INCLUDE_TESTS=OFF \
+            -DLLVM_INCLUDE_TESTS=OFF \
             $EXTRA_ARGS
 
       - name: Build
@@ -106,6 +101,40 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dxc-${{ matrix.target }}
+          path: |
+            build/lib/libdxcompiler.so
+            build/lib/libdxil.so
+
+  build-linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang libxml2-dev
+
+      - name: CMake Configure
+        run: |
+          cmake -B build -G Ninja \
+            -C cmake/caches/PredefinedParams.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_TARGETS_TO_BUILD=None \
+            -DENABLE_SPIRV_CODEGEN=ON \
+            -DHLSL_INCLUDE_TESTS=OFF \
+            -DLLVM_INCLUDE_TESTS=OFF \
+            -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+
+      - name: Build
+        run: cmake --build build --target dxcompiler --target dxildll
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxc-linux-arm64
           path: |
             build/lib/libdxcompiler.so
             build/lib/libdxil.so
@@ -136,6 +165,7 @@ jobs:
             -DLLVM_TARGETS_TO_BUILD=None \
             -DENABLE_SPIRV_CODEGEN=ON \
             -DHLSL_INCLUDE_TESTS=OFF \
+            -DLLVM_INCLUDE_TESTS=OFF \
             -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }}
 
       - name: Build
@@ -150,7 +180,7 @@ jobs:
             build/lib/libdxil.dylib
 
   release:
-    needs: [build-windows, build-linux, build-macos]
+    needs: [build-windows, build-linux, build-linux-arm64, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write

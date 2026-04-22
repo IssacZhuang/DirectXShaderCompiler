@@ -7,9 +7,19 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
   endif(NOT DEFINED LLVM_${target_name}_BUILD)
 
   if (EXISTS ${LLVM_MAIN_SRC_DIR}/cmake/platforms/${toolchain}.cmake)
-    set(CROSS_TOOLCHAIN_FLAGS_${target_name} 
+    set(CROSS_TOOLCHAIN_FLAGS_${target_name}
         -DCMAKE_TOOLCHAIN_FILE=\"${LLVM_MAIN_SRC_DIR}/cmake/platforms/${toolchain}.cmake\"
         CACHE STRING "Toolchain file for ${target_name}")
+  endif()
+
+  # When cross-compiling, the NATIVE sub-build must use the host compiler,
+  # not the target toolchain. Force native compilers for NATIVE builds.
+  if(target_name STREQUAL "NATIVE" AND CMAKE_CROSSCOMPILING)
+    set(NATIVE_COMPILER_FLAGS
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER_NATIVE}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER_NATIVE})
+  else()
+    set(NATIVE_COMPILER_FLAGS "")
   endif()
 
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}
@@ -21,6 +31,9 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
         -DLLVM_ENABLE_EH=${LLVM_ENABLE_EH}
         -DLLVM_ENABLE_RTTI=${LLVM_ENABLE_RTTI}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DLLVM_INCLUDE_TESTS=OFF
+        -DHLSL_INCLUDE_TESTS=OFF
+        ${NATIVE_COMPILER_FLAGS}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
     WORKING_DIRECTORY ${LLVM_${target_name}_BUILD}
     DEPENDS ${LLVM_${target_name}_BUILD}
@@ -33,7 +46,7 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
                                       ${LLVM_${target_name}_BUILD})
 
   if(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
-    
+
 
     message(STATUS "Configuring ${target_name} build...")
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -47,6 +60,9 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
         -G "${CMAKE_GENERATOR}" -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}
         -DLLVM_ENABLE_EH=${LLVM_ENABLE_EH}
         -DLLVM_ENABLE_RTTI=${LLVM_ENABLE_RTTI}
+        -DLLVM_INCLUDE_TESTS=OFF
+        -DHLSL_INCLUDE_TESTS=OFF
+        ${NATIVE_COMPILER_FLAGS}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
       WORKING_DIRECTORY ${LLVM_${target_name}_BUILD} )
   endif(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
