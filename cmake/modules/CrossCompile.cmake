@@ -12,15 +12,7 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
         CACHE STRING "Toolchain file for ${target_name}")
   endif()
 
-  # When cross-compiling, the NATIVE sub-build must use the host compiler,
-  # not the target toolchain. Force native compilers for NATIVE builds.
-  if(target_name STREQUAL "NATIVE" AND CMAKE_CROSSCOMPILING)
-    set(NATIVE_COMPILER_FLAGS
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER_NATIVE}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER_NATIVE})
-  else()
-    set(NATIVE_COMPILER_FLAGS "")
-  endif()
+  set(NATIVE_COMPILER_FLAGS "")
 
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${LLVM_${target_name}_BUILD}
