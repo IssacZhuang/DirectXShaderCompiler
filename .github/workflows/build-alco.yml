@@ -117,6 +117,12 @@ jobs:
       - name: Build
         run: cmake --build build --target dxcompiler --target dxildll
 
+      - name: Strip Android binaries
+        if: matrix.toolchain == 'android'
+        run: |
+          ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip build/lib/libdxcompiler.so
+          ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip build/lib/libdxil.so
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
