@@ -21,6 +21,7 @@ jobs:
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -C cmake/caches/PredefinedParams.cmake `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
             -DLLVM_TARGETS_TO_BUILD=None `
             -DENABLE_SPIRV_CODEGEN=ON `
             -DHLSL_INCLUDE_TESTS=OFF `
@@ -49,6 +50,7 @@ jobs:
           cmake -B build -G "Visual Studio 17 2022" -A ARM64 `
             -C cmake/caches/PredefinedParams.cmake `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
             -DLLVM_TARGETS_TO_BUILD=None `
             -DENABLE_SPIRV_CODEGEN=ON `
             -DHLSL_INCLUDE_TESTS=OFF `
